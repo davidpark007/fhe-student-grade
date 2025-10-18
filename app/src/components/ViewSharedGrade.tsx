@@ -5,11 +5,11 @@ import { useEthersSigner } from '../hooks/useEthersSigner';
 import { CONTRACT_ADDRESS, CONTRACT_ABI } from '../config/contracts';
 
 const subjects = [
-  { id: 0, name: 'Language' },
-  { id: 1, name: 'Mathematics' },
-  { id: 2, name: 'Science' },
-  { id: 3, name: 'History' },
-  { id: 4, name: 'Physical' },
+  { id: 0, name: 'Language', icon: '📚' },
+  { id: 1, name: 'Mathematics', icon: '🔢' },
+  { id: 2, name: 'Science', icon: '🔬' },
+  { id: 3, name: 'History', icon: '📜' },
+  { id: 4, name: 'Physical', icon: '⚽' },
 ];
 
 export function ViewSharedGrade() {
@@ -20,6 +20,7 @@ export function ViewSharedGrade() {
   const [subject, setSubject] = useState(1);
   const [grade, setGrade] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const { data: handle, refetch } = useReadContract({
     address: CONTRACT_ADDRESS,
@@ -32,11 +33,21 @@ export function ViewSharedGrade() {
   const onView = async (e: React.FormEvent) => {
     e.preventDefault();
     setGrade(null);
-    if (!instance || !address) return;
+    setError(null);
+
+    if (!instance || !address) {
+      setError('Please connect your wallet');
+      return;
+    }
+    if (!student || !/^0x[a-fA-F0-9]{40}$/.test(student)) {
+      setError('Invalid student address');
+      return;
+    }
+
     setBusy(true);
     try {
       const { data } = await refetch();
-      if (!data) throw new Error('No grade found');
+      if (!data) throw new Error('No grade found or access not granted');
       const signer = await signerPromise;
       if (!signer) throw new Error('Wallet not connected');
 
@@ -55,7 +66,7 @@ export function ViewSharedGrade() {
       const v = res[data as string];
       setGrade(String(v));
     } catch (e: any) {
-      setGrade(`Failed: ${e?.message || 'error'}`);
+      setError(e?.message || 'Failed to decrypt. You may not have permission.');
     } finally {
       setBusy(false);
     }
@@ -64,19 +75,84 @@ export function ViewSharedGrade() {
   return (
     <div>
       <h2>View Shared Grade</h2>
-      <form onSubmit={onView} style={{ display: 'grid', gap: 12, maxWidth: 560 }}>
-        <input placeholder="Student address (0x...)" value={student} onChange={e => setStudent(e.target.value)} style={inputStyle} />
-        <select value={subject} onChange={e => setSubject(parseInt(e.target.value))} style={inputStyle}>
-          {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-        </select>
-        <button disabled={busy} style={buttonStyle}>{busy ? 'Fetching...' : 'View Grade'}</button>
+      <p>View grades that have been shared with you by students.</p>
+
+      <form onSubmit={onView} className="form-container">
+        <div className="form-group">
+          <label className="form-label">Student Wallet Address</label>
+          <input
+            className="form-input"
+            placeholder="0x..."
+            value={student}
+            onChange={e => setStudent(e.target.value)}
+          />
+        </div>
+
+        <div className="form-group">
+          <label className="form-label">Subject</label>
+          <div className="subject-grid">
+            {subjects.map(s => (
+              <div
+                key={s.id}
+                className={`subject-card ${subject === s.id ? 'selected' : ''}`}
+                onClick={() => setSubject(s.id)}
+              >
+                <div className="subject-icon">{s.icon}</div>
+                <div className="subject-name">{s.name}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <button
+          type="submit"
+          disabled={busy}
+          className="btn btn-primary"
+        >
+          {busy ? (
+            <>
+              <span className="spinner"></span>
+              Fetching & Decrypting...
+            </>
+          ) : (
+            '🔍 View Grade'
+          )}
+        </button>
       </form>
-      {handle && <p style={{ marginTop: 8 }}>Encrypted handle: <code>{String(handle).slice(0, 34)}...</code></p>}
-      {grade && <p>Decrypted grade: <strong>{grade}</strong></p>}
+
+      {handle && (
+        <div className="info-box">
+          <div className="info-box-label">Encrypted Handle</div>
+          <div className="info-box-value">{String(handle).slice(0, 66)}</div>
+        </div>
+      )}
+
+      {grade && !error && (
+        <div className="grade-display">
+          <div style={{ marginBottom: '0.5rem', fontSize: '1rem', opacity: 0.9 }}>
+            {subjects.find(s => s.id === subject)?.icon} {subjects.find(s => s.id === subject)?.name}
+          </div>
+          <strong>{grade}</strong>
+          <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', opacity: 0.9 }}>
+            / 100
+          </div>
+        </div>
+      )}
+
+      {error && (
+        <div className="message message-error">
+          {error}
+        </div>
+      )}
+
+      <div className="info-box">
+        <div className="info-box-label">ℹ️ Note</div>
+        <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
+          You can only decrypt grades that have been explicitly shared with your address.
+          If decryption fails, the student may not have granted you access yet.
+        </p>
+      </div>
     </div>
   );
 }
-
-const inputStyle: React.CSSProperties = { padding: '8px 10px', borderRadius: 6, border: '1px solid #CBD5E1' };
-const buttonStyle: React.CSSProperties = { padding: '8px 12px', borderRadius: 6, border: '1px solid #2563EB', background: '#2563EB', color: '#fff', cursor: 'pointer', width: 'fit-content' };
 

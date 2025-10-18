@@ -7,10 +7,12 @@ export function Header() {
       <div className="header-container">
         <div className="header-content">
           <div className="header-left">
-            <h1 className="header-title">
-              FHE Student Grades
-            </h1>
-            
+            <div className="header-icon">🎓</div>
+            <div>
+              <h1 className="header-title">
+                FHE Student Grades
+              </h1>
+            </div>
           </div>
           <ConnectButton />
         </div>
