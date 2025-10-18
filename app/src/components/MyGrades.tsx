@@ -5,11 +5,11 @@ import { useZamaInstance } from '../hooks/useZamaInstance';
 import { useEthersSigner } from '../hooks/useEthersSigner';
 
 const subjects = [
-  { id: 0, name: 'Language' },
-  { id: 1, name: 'Mathematics' },
-  { id: 2, name: 'Science' },
-  { id: 3, name: 'History' },
-  { id: 4, name: 'Physical' },
+  { id: 0, name: 'Language', icon: '📚' },
+  { id: 1, name: 'Mathematics', icon: '🔢' },
+  { id: 2, name: 'Science', icon: '🔬' },
+  { id: 3, name: 'History', icon: '📜' },
+  { id: 4, name: 'Physical', icon: '⚽' },
 ];
 
 export function MyGrades() {
@@ -20,7 +20,8 @@ export function MyGrades() {
   const [selected, setSelected] = useState(1);
   const [grade, setGrade] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  
+  const [error, setError] = useState<string | null>(null);
+
   const { data: handle } = useReadContract({
     address: CONTRACT_ADDRESS,
     abi: CONTRACT_ABI,
@@ -31,6 +32,7 @@ export function MyGrades() {
 
   const decrypt = async () => {
     setGrade(null);
+    setError(null);
     if (!instance || !address || !handle) return;
     setBusy(true);
     try {
@@ -52,32 +54,84 @@ export function MyGrades() {
       const v = res[handle as string];
       setGrade(String(v));
     } catch (e: any) {
-      setGrade(`Failed: ${e?.message || 'error'}`);
+      setError(e?.message || 'Failed to decrypt grade');
     } finally {
       setBusy(false);
     }
   };
 
-  if (!address) return <p>Please connect your wallet.</p>;
+  if (!address) {
+    return (
+      <div>
+        <h2>My Grades</h2>
+        <div className="message message-info">
+          Please connect your wallet to view your grades.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
       <h2>My Grades</h2>
-      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12 }}>
-        <span>Subject:</span>
-        <select value={selected} onChange={e => setSelected(parseInt(e.target.value))} style={selectStyle}>
-          {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-        </select>
-        <button onClick={decrypt} disabled={busy || !handle} style={buttonStyle}>{busy ? 'Decrypting...' : 'Decrypt'}</button>
+      <p>Select a subject and decrypt your grade. All grades are encrypted on-chain.</p>
+
+      <div className="form-group">
+        <label className="form-label">Select Subject</label>
+        <div className="subject-grid">
+          {subjects.map(s => (
+            <div
+              key={s.id}
+              className={`subject-card ${selected === s.id ? 'selected' : ''}`}
+              onClick={() => setSelected(s.id)}
+            >
+              <div className="subject-icon">{s.icon}</div>
+              <div className="subject-name">{s.name}</div>
+            </div>
+          ))}
+        </div>
       </div>
-      <div>
-        <p>Encrypted handle: <code>{handle ? String(handle).slice(0, 34) + '...' : 'N/A'}</code></p>
-        {grade && <p>Decrypted grade: <strong>{grade}</strong></p>}
-      </div>
+
+      <button
+        onClick={decrypt}
+        disabled={busy || !handle}
+        className="btn btn-primary"
+      >
+        {busy ? (
+          <>
+            <span className="spinner"></span>
+            Decrypting...
+          </>
+        ) : (
+          '🔓 Decrypt Grade'
+        )}
+      </button>
+
+      {handle && (
+        <div className="info-box">
+          <div className="info-box-label">Encrypted Handle</div>
+          <div className="info-box-value">{String(handle).slice(0, 66)}</div>
+        </div>
+      )}
+
+      {grade && !error && (
+        <div className="grade-display">
+          <div style={{ marginBottom: '0.5rem', fontSize: '1rem', opacity: 0.9 }}>
+            {subjects.find(s => s.id === selected)?.icon} {subjects.find(s => s.id === selected)?.name}
+          </div>
+          <strong>{grade}</strong>
+          <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', opacity: 0.9 }}>
+            / 100
+          </div>
+        </div>
+      )}
+
+      {error && (
+        <div className="message message-error">
+          {error}
+        </div>
+      )}
     </div>
   );
 }
-
-const selectStyle: React.CSSProperties = { padding: '8px 10px', borderRadius: 6, border: '1px solid #CBD5E1' };
-const buttonStyle: React.CSSProperties = { padding: '8px 12px', borderRadius: 6, border: '1px solid #2563EB', background: '#2563EB', color: '#fff', cursor: 'pointer' };
 
