@@ -43,7 +43,7 @@ contract StudentGrades is SepoliaConfig {
         uint8 subject,
         externalEuint32 inputEuint32,
         bytes calldata inputProof
-    ) external onlyOwner {
+    ) external {
         require(subject <= SUBJECT_PHYSICAL, "Invalid subject");
 
         euint32 enc = FHE.fromExternal(inputEuint32, inputProof);
