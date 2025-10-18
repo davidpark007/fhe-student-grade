@@ -22,11 +22,14 @@ export function ViewSharedGrade() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const isValidStudentAddress = /^0x[a-fA-F0-9]{40}$/.test(student);
+  const readArgs = isValidStudentAddress ? ([student as `0x${string}`, subject] as const) : undefined;
+
   const { data: handle, refetch } = useReadContract({
     address: CONTRACT_ADDRESS,
     abi: CONTRACT_ABI,
     functionName: 'getEncryptedGrade',
-    args: student && /^0x[a-fA-F0-9]{40}$/.test(student) ? [student, subject] : undefined,
+    args: readArgs,
     query: { enabled: false },
   });
 
@@ -39,7 +42,7 @@ export function ViewSharedGrade() {
       setError('Please connect your wallet');
       return;
     }
-    if (!student || !/^0x[a-fA-F0-9]{40}$/.test(student)) {
+    if (!student || !isValidStudentAddress) {
       setError('Invalid student address');
       return;
     }
@@ -155,4 +158,3 @@ export function ViewSharedGrade() {
     </div>
   );
 }
-
