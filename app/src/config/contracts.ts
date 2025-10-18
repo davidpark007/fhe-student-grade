@@ -1,6 +1,6 @@
 // StudentGrades contract deployed on Sepolia
 // Replace with the actual deployed address after `hardhat deploy --network sepolia`
-export const CONTRACT_ADDRESS = '0x0000000000000000000000000000000000000000';
+export const CONTRACT_ADDRESS = '0xb6B49EE5A726412464aB0d5F0F97dDEEABe91186';
 
 // ABI copied from generated artifacts (deployments/sepolia/StudentGrades.json)
 // Keep in sync after deployment.
