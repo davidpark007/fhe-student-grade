@@ -1,5 +1,5 @@
 // StudentGrades contract deployed on Sepolia
-export const CONTRACT_ADDRESS = '0x6fF4651a3F66d9075040bB25Fb31521053Bd5f08' as const;
+export const CONTRACT_ADDRESS = '0xbF48B544036711aA7070A5Fd889DBBC5065915CA' as const;
 
 // ABI copied from deployments/sepolia/StudentGrades.json. Keep in sync after deployments.
 export const CONTRACT_ABI = [

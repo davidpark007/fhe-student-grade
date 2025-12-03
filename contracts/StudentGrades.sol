@@ -2,12 +2,12 @@
 pragma solidity ^0.8.24;
 
 import {FHE, euint32, externalEuint32} from "@fhevm/solidity/lib/FHE.sol";
-import {SepoliaConfig} from "@fhevm/solidity/config/ZamaConfig.sol";
+import {ZamaEthereumConfig} from "@fhevm/solidity/config/ZamaConfig.sol";
 
 /// @title Encrypted Student Grades
 /// @notice Stores student grades for 5 subjects using FHE. Only the teacher (owner) can set grades.
 ///         Students can allow per-subject viewers to decrypt their grade client-side via the relayer.
-contract StudentGrades is SepoliaConfig {
+contract StudentGrades is ZamaEthereumConfig {
     address public owner;
 
     /// @notice Subjects
